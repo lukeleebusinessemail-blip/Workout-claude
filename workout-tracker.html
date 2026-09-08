@@ -208,8 +208,8 @@ label.field > span{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em
 .tick[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:#fff}
 .setactions{display:flex;gap:6px;margin-top:8px}
 
-.addex{display:grid;grid-template-columns:1fr 90px 110px auto;gap:8px;align-items:end}
-@media (max-width:640px){.addex{grid-template-columns:1fr 1fr}}
+.addex{display:grid;grid-template-columns:1.3fr 76px 100px 1.1fr auto;gap:8px;align-items:end}
+@media (max-width:760px){.addex{grid-template-columns:1fr 76px 100px}.addex > *:nth-child(4){grid-column:1 / -1}}
 
 /* ---------- stats ---------- */
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
@@ -260,6 +260,29 @@ table.sets th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:
 .brief dd{margin:2px 0 0;font-size:14px}
 .brief dd strong{font-family:var(--display);font-size:19px;font-weight:500}
 .hidden{display:none!important}
+
+/* goal bar */
+.goalbar{position:relative;height:12px;border-radius:999px;background:var(--surface-3);overflow:hidden;border:1px solid var(--line)}
+.goalbar-fill{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:999px}
+.goalbar-mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-2)}
+
+/* in-session exercise editor */
+.ex-edit{display:grid;grid-template-columns:1.4fr 90px 1.4fr;gap:8px;padding:10px;margin-bottom:10px;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px}
+.ex-edit .row2{grid-column:1 / -1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:640px){.ex-edit{grid-template-columns:1fr 90px}.ex-edit label:nth-child(3){grid-column:1 / -1}}
+.ex-hd .nm{display:flex;align-items:center;gap:7px}
+.pencil{background:none;border:none;padding:2px;cursor:pointer;color:var(--ink-3);line-height:0}
+.pencil:hover{color:var(--accent)}
+.exnote-live{font-size:12.5px;color:var(--accent);font-style:normal}
+
+/* scans */
+.scanform{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.scanhero{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.scanhero div{border-left:2px solid var(--edge,var(--line-strong));padding-left:10px}
+.scanhero dt{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.scanhero dd{margin:2px 0 0;font-family:var(--display);font-size:21px;font-weight:500}
+.scanhero dd small{font-family:var(--sans);font-size:11.5px;color:var(--ink-3);font-weight:400}
+.flag{border-left:3px solid var(--legs);background:var(--surface-2);padding:10px 12px;border-radius:0 8px 8px 0;font-size:13.5px}
 .footnote{font-size:12px;color:var(--ink-3);max-width:66ch}
 .toast{
   position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);
@@ -286,6 +309,7 @@ table.sets th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" id="tab-train" aria-controls="view-train" aria-selected="true">Train</button>
     <button class="tab" role="tab" id="tab-progress" aria-controls="view-progress" aria-selected="false">Progress</button>
+    <button class="tab" role="tab" id="tab-body" aria-controls="view-body" aria-selected="false">Body</button>
     <button class="tab" role="tab" id="tab-program" aria-controls="view-program" aria-selected="false">Program</button>
   </nav>
 
@@ -316,6 +340,7 @@ table.sets th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:
             <label class="field"><span>Exercise</span><input type="text" id="newExName" list="exNames" placeholder="e.g. Chest-Supported Row"></label>
             <label class="field"><span>Sets</span><input type="number" id="newExSets" value="3" min="1" max="12"></label>
             <label class="field"><span>Rep range</span><input type="text" id="newExReps" value="8-12"></label>
+            <label class="field"><span>Note</span><input type="text" id="newExNote" placeholder="wide grip, machine…"></label>
             <button class="btn" id="addExBtn">Add</button>
           </div>
           <datalist id="exNames"></datalist>
@@ -353,37 +378,84 @@ table.sets th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:
     </div>
 
     <div class="panel">
+      <div class="panel-hd"><h2>History</h2><span class="eyebrow push-right" id="histCount"></span></div>
+      <div class="panel-bd"><div class="hist" id="history"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ BODY ============ -->
+  <section id="view-body" role="tabpanel" aria-labelledby="tab-body" class="stack hidden">
+    <div class="panel">
+      <div class="panel-hd"><h2 id="goalHd">Road to 165</h2><span class="eyebrow push-right" id="goalDeadline"></span></div>
+      <div class="panel-bd stack">
+        <div class="goalbar"><div class="goalbar-fill" id="goalFill"></div><div class="goalbar-mark" id="goalMark"></div></div>
+        <div class="tiles" id="goalTiles"></div>
+        <div class="spread">
+          <label class="field" style="width:120px"><span>Target lb</span><input type="number" id="goalLb" step="0.5"></label>
+          <label class="field" style="width:160px"><span>Target date</span><input type="date" id="goalDate"></label>
+          <button class="btn sm" id="goalSave">Update goal</button>
+          <span class="push-right footnote" id="goalVerdict"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
       <div class="panel-hd">
         <h2>Bodyweight</h2>
         <div class="push-right spread">
-          <input type="number" id="bwInput" step="0.1" placeholder="190.0" style="width:110px" aria-label="Bodyweight in pounds">
+          <input type="number" id="bwInput" step="0.1" placeholder="187.4" style="width:110px" aria-label="Bodyweight in pounds">
           <input type="date" id="bwDate" style="width:150px" aria-label="Bodyweight date">
           <button class="btn sm" id="bwAdd">Log</button>
         </div>
       </div>
-      <div class="panel-bd"><div id="bwChart"></div></div>
+      <div class="panel-bd">
+        <p class="footnote" style="margin-bottom:10px">Solid line is the scale. Dashed line is the pace that lands you on target — stay at or under it. Weigh in first thing, same conditions, every day; the day-to-day noise is water, not fat.</p>
+        <div id="bwChart"></div>
+      </div>
     </div>
 
     <div class="panel">
-      <div class="panel-hd"><h2>History</h2><span class="eyebrow push-right" id="histCount"></span></div>
-      <div class="panel-bd"><div class="hist" id="history"></div></div>
+      <div class="panel-hd"><h2>Body scans</h2><span class="eyebrow push-right">every 10 workouts</span></div>
+      <div class="panel-bd stack">
+        <div id="scanLatest"></div>
+        <div id="bfChart"></div>
+        <div class="tblscroll" id="scanTable"></div>
+        <details class="hrow" id="scanFormWrap"><summary><span class="hname">+ Log a new scan</span><span class="push-right footnote">Evolt 360 numbers, in pounds</span></summary>
+          <div class="hbody">
+            <div class="scanform">
+              <label class="field"><span>Date</span><input type="date" data-sf="d"></label>
+              <label class="field"><span>Weight lb</span><input type="number" step="0.1" data-sf="weight"></label>
+              <label class="field"><span>Body fat %</span><input type="number" step="0.1" data-sf="bf"></label>
+              <label class="field"><span>Fat mass lb</span><input type="number" step="0.1" data-sf="fat"></label>
+              <label class="field"><span>Lean mass lb</span><input type="number" step="0.1" data-sf="lean"></label>
+              <label class="field"><span>Skeletal muscle lb</span><input type="number" step="0.1" data-sf="smm"></label>
+              <label class="field"><span>Visceral level</span><input type="number" step="1" data-sf="visc"></label>
+              <label class="field"><span>Waist in</span><input type="number" step="0.1" data-sf="waist"></label>
+              <label class="field"><span>BMR kcal</span><input type="number" step="1" data-sf="bmr"></label>
+              <label class="field"><span>TEE kcal</span><input type="number" step="1" data-sf="tee"></label>
+            </div>
+            <div class="spread" style="margin-top:10px"><button class="btn primary sm" id="scanAdd">Save scan</button>
+            <span class="footnote">Lean mass = everything that is not fat. Skeletal muscle is the part of it you actually train.</span></div>
+          </div>
+        </details>
+      </div>
     </div>
   </section>
 
   <!-- ============ PROGRAM ============ -->
   <section id="view-program" role="tabpanel" aria-labelledby="tab-program" class="stack hidden">
     <div class="panel">
-      <div class="panel-hd"><h2>Cut targets</h2><span class="eyebrow push-right">23M · 5'10" · 190 lb · ~21% bf</span></div>
+      <div class="panel-hd"><h2>Cut targets</h2><span class="eyebrow push-right">from your 09-07 Evolt scan</span></div>
       <div class="panel-bd">
         <dl class="brief">
-          <div><dt>Maintenance (est.)</dt><dd><strong>2,890</strong> kcal/day</dd></div>
-          <div><dt>Cut intake</dt><dd><strong>2,350</strong> kcal/day</dd></div>
-          <div><dt>Protein floor</dt><dd><strong>190</strong> g/day</dd></div>
-          <div><dt>Loss rate</dt><dd><strong>1.0</strong> lb/week</dd></div>
-          <div><dt>Daily steps</dt><dd><strong>9,000</strong> steps/day</dd></div>
-          <div><dt>Recheck</dt><dd><strong>every 10 lb</strong> lost</dd></div>
+          <div><dt>Maintenance (TEE)</dt><dd><strong>2,735</strong> kcal/day</dd></div>
+          <div><dt>Cut intake</dt><dd><strong>2,000</strong> kcal/day</dd></div>
+          <div><dt>Protein floor</dt><dd><strong>185</strong> g/day</dd></div>
+          <div><dt>Fat / carbs</dt><dd><strong>60</strong> g / <strong>180</strong> g</dd></div>
+          <div><dt>Loss rate needed</dt><dd><strong>1.7</strong> lb/week</dd></div>
+          <div><dt>Daily steps</dt><dd><strong>11,000</strong> steps/day</dd></div>
         </dl>
-        <p class="footnote" style="margin-top:14px">Mifflin-St Jeor at 190 lb / 5'10" / 23 y puts BMR near 1,860 kcal; a 1.55 activity multiplier for six lifting days plus 9k steps lands maintenance around 2,890. A 540 kcal deficit is roughly 0.5% of bodyweight per week — fast enough to see the scale move, slow enough to keep your bench. Fat 65-75 g, carbs fill the rest (~230 g). Train heavy in the 5-8 range on the first three days: on a deficit, load is what preserves muscle, not extra volume. Weigh in daily, judge by the 7-day average. General fitness information, not medical advice.</p>
+        <p class="footnote" style="margin-top:14px">Your scan measured TEE at 2,735 kcal — lower than the 2,890 I estimated from height and weight, so the real numbers replace the guess. Eating 2,000 leaves a 735 kcal deficit (~1.5 lb/week); the extra cardio and steps below carry the rest of the way to 1.7. Protein at 185 g is well above the 148-156 g on your scan printout: at this rate of loss, protein is the single thing standing between you and losing muscle along with the fat, and 185 g is ~1.3 g per pound of your 143.5 lb lean mass. Keep training heavy in the 5-8 range on days 1-3 — on a deficit, load preserves muscle, not extra volume. Weigh in daily, judge only the 7-day average. General fitness information, not medical advice.</p>
       </div>
     </div>
 
@@ -415,7 +487,7 @@ const DEFAULT_PROGRAM = {
   name: "Six-Day PPL — Cut Phase",
   days: [
     { id:"d1", name:"Push — Heavy", tag:"push",
-      cardio:"15 min incline walk · 12% @ 3.0 mph",
+      cardio:"20 min incline walk · 12% @ 3.0 mph",
       exercises:[
         {id:"e1", name:"Barbell Bench Press", sets:4, reps:"5-7", note:"3 min rests. Add 5 lb when you hit 7 on all four."},
         {id:"e2", name:"Incline Dumbbell Press", sets:3, reps:"8-10", note:"30° bench, full stretch at the bottom."},
@@ -425,17 +497,18 @@ const DEFAULT_PROGRAM = {
         {id:"e6", name:"Rope Pushdown", sets:3, reps:"12-15", note:"Last set to failure."}
       ]},
     { id:"d2", name:"Pull — Heavy", tag:"pull",
-      cardio:"15 min incline walk · 12% @ 3.0 mph",
+      cardio:"20 min incline walk · 12% @ 3.0 mph",
       exercises:[
         {id:"e7", name:"Weighted Pull-Up", sets:4, reps:"5-8", note:"Bodyweight only until you clear 8 clean reps."},
+        {id:"e37", name:"Trap-Bar Deadlift", sets:3, reps:"5-6", note:"Added from your scan: legs sit mid-range while arms and torso read high. Third heavy lower-body exposure."},
         {id:"e8", name:"Barbell Row", sets:3, reps:"6-8", note:"Torso ~45°, no heaving."},
         {id:"e9", name:"Chest-Supported Row", sets:3, reps:"10-12", note:""},
         {id:"e10", name:"Face Pull", sets:3, reps:"15-20", note:"Rear delts and posture insurance."},
         {id:"e11", name:"Dumbbell Curl", sets:3, reps:"8-10", note:""},
-        {id:"e12", name:"Hammer Curl", sets:3, reps:"10-12", note:""}
+        {id:"e12", name:"Dumbbell Curl (drop set finish)", sets:2, reps:"10-12", note:"Trimmed from three arm slots to two to make room for the deadlift. Add Hammer Curl back any time if you miss it."}
       ]},
     { id:"d3", name:"Legs — Heavy", tag:"legs",
-      cardio:"10 min easy bike to flush — legs are cooked, keep it light",
+      cardio:"12 min easy bike to flush — legs are cooked, keep it light",
       exercises:[
         {id:"e13", name:"Barbell Back Squat", sets:4, reps:"5-7", note:"Belt optional, depth over load."},
         {id:"e14", name:"Romanian Deadlift", sets:3, reps:"8-10", note:"Hamstring stretch, stop above the knee."},
@@ -445,7 +518,7 @@ const DEFAULT_PROGRAM = {
         {id:"e18", name:"Hanging Leg Raise", sets:3, reps:"12-15", note:""}
       ]},
     { id:"d4", name:"Push — Volume", tag:"push",
-      cardio:"20 min incline walk · 10% @ 3.2 mph",
+      cardio:"25 min incline walk · 10% @ 3.2 mph",
       exercises:[
         {id:"e19", name:"Incline Smith Press", sets:4, reps:"8-10", note:"90 sec rests."},
         {id:"e20", name:"Machine Chest Press", sets:3, reps:"10-12", note:""},
@@ -455,17 +528,18 @@ const DEFAULT_PROGRAM = {
         {id:"e24", name:"Single-Arm Cable Kickback", sets:3, reps:"12-15", note:""}
       ]},
     { id:"d5", name:"Pull — Volume", tag:"pull",
-      cardio:"20 min incline walk · 10% @ 3.2 mph",
+      cardio:"25 min incline walk · 10% @ 3.2 mph",
       exercises:[
         {id:"e25", name:"Lat Pulldown (Wide)", sets:4, reps:"10-12", note:"90 sec rests."},
         {id:"e26", name:"Seated Cable Row", sets:3, reps:"10-12", note:"Neutral grip."},
         {id:"e27", name:"Single-Arm Dumbbell Row", sets:3, reps:"10-12", note:""},
         {id:"e28", name:"Straight-Arm Pulldown", sets:3, reps:"12-15", note:""},
         {id:"e29", name:"Reverse Pec Deck", sets:3, reps:"15-20", note:""},
-        {id:"e30", name:"Incline Dumbbell Curl", sets:3, reps:"10-12", note:"Deep stretch at the bottom."}
+        {id:"e30", name:"Incline Dumbbell Curl", sets:3, reps:"10-12", note:"Deep stretch at the bottom."},
+        {id:"e38", name:"Seated Leg Curl", sets:3, reps:"12-15", note:"Fourth weekly hamstring hit — cheap to add, and the lower body is the half that needs it."}
       ]},
     { id:"d6", name:"Legs & Core — Volume", tag:"legs",
-      cardio:"10 × (30 sec hard / 90 sec easy) on the air bike",
+      cardio:"12 × (30 sec hard / 90 sec easy) on the air bike",
       exercises:[
         {id:"e31", name:"Hack Squat", sets:4, reps:"8-10", note:"Or leg press if the hack squat is taken."},
         {id:"e32", name:"Bulgarian Split Squat", sets:3, reps:"10-12", note:"Per leg. Humbling — start with dumbbells you trust."},
@@ -475,12 +549,12 @@ const DEFAULT_PROGRAM = {
         {id:"e36", name:"Cable Crunch", sets:3, reps:"15-20", note:""}
       ]},
     { id:"d7", name:"Rest — Active Recovery", tag:"rest",
-      cardio:"30-45 min walk outside · stretch hips and shoulders",
+      cardio:"45 min walk outside · stretch hips and shoulders",
       exercises:[] }
   ]
 };
 
-const LIBRARY = ["Barbell Bench Press","Incline Barbell Press","Incline Dumbbell Press","Flat Dumbbell Press","Machine Chest Press","Cable Fly","Pec Deck","Dips","Overhead Press","Seated Dumbbell Shoulder Press","Arnold Press","Dumbbell Lateral Raise","Cable Lateral Raise","Reverse Pec Deck","Face Pull","Rope Pushdown","Overhead Cable Triceps Extension","Skullcrusher","Close-Grip Bench Press","Pull-Up","Weighted Pull-Up","Lat Pulldown (Wide)","Neutral-Grip Pulldown","Barbell Row","Pendlay Row","T-Bar Row","Chest-Supported Row","Seated Cable Row","Single-Arm Dumbbell Row","Straight-Arm Pulldown","Shrug","Dumbbell Curl","Hammer Curl","Incline Dumbbell Curl","Preacher Curl","Cable Curl","Barbell Back Squat","Front Squat","Hack Squat","Leg Press","Bulgarian Split Squat","Walking Lunge","Romanian Deadlift","Conventional Deadlift","Seated Leg Curl","Lying Leg Curl","Leg Extension","Barbell Hip Thrust","Standing Calf Raise","Seated Calf Raise","Hanging Leg Raise","Cable Crunch","Plank","Ab Wheel"];
+const LIBRARY = ["Barbell Bench Press","Incline Barbell Press","Incline Dumbbell Press","Flat Dumbbell Press","Machine Chest Press","Cable Fly","Pec Deck","Dips","Overhead Press","Seated Dumbbell Shoulder Press","Arnold Press","Dumbbell Lateral Raise","Cable Lateral Raise","Reverse Pec Deck","Face Pull","Rope Pushdown","Overhead Cable Triceps Extension","Skullcrusher","Close-Grip Bench Press","Pull-Up","Weighted Pull-Up","Lat Pulldown (Wide)","Neutral-Grip Pulldown","Barbell Row","Pendlay Row","T-Bar Row","Chest-Supported Row","Seated Cable Row","Single-Arm Dumbbell Row","Straight-Arm Pulldown","Shrug","Dumbbell Curl","Hammer Curl","Incline Dumbbell Curl","Preacher Curl","Cable Curl","Barbell Back Squat","Front Squat","Hack Squat","Leg Press","Bulgarian Split Squat","Walking Lunge","Romanian Deadlift","Conventional Deadlift","Seated Leg Curl","Lying Leg Curl","Leg Extension","Barbell Hip Thrust","Trap-Bar Deadlift","Standing Calf Raise","Seated Calf Raise","Hanging Leg Raise","Cable Crunch","Plank","Ab Wheel"];
 
 /* ============================================================
    2. Storage — local first, artifact db when the viewer grants it
@@ -508,7 +582,11 @@ const Store = {
   async removeSession(id){ if(!this.db) return;
     try{ await this.db.doc("sessions/"+id).delete(); }catch(e){ warnWrite(e); } },
   async saveBw(entries){ lsSet("bw", entries); if(!this.db) return;
-    try{ await this.db.doc("state/bodyweight").set({ entries }); }catch(e){ warnWrite(e); } }
+    try{ await this.db.doc("state/bodyweight").set({ entries }); }catch(e){ warnWrite(e); } },
+  async saveScans(entries){ lsSet("scans", entries); if(!this.db) return;
+    try{ await this.db.doc("state/scans").set({ entries }); }catch(e){ warnWrite(e); } },
+  async saveGoal(goal){ lsSet("goal", goal); if(!this.db) return;
+    try{ await this.db.doc("state/goal").set(goal); }catch(e){ warnWrite(e); } }
 };
 function warnWrite(e){
   const code = e && e.code;
@@ -520,10 +598,14 @@ function warnWrite(e){
 /* ============================================================
    3. State + small helpers
    ============================================================ */
+const DEFAULT_GOAL = { startD:"2026-09-07", startLb:191.6, targetLb:165, targetD:"2026-12-25" };
+
 const state = {
   program: null,
   sessions: [],
   bw: [],
+  scans: [],
+  goal: null,
   draft: null,
   progExercise: null
 };
@@ -566,7 +648,8 @@ function buildDraft(day){
     dayId: day.id, dayName: day.name, tag: day.tag, cardio: day.cardio || "",
     date: todayISO(), bw: "", notes: "",
     exercises: (day.exercises || []).map(ex => ({
-      id: uid("x"), name: ex.name, target: ex.sets, reps: ex.reps, note: ex.note || "",
+      id: uid("x"), srcId: ex.id, name: ex.name, target: ex.sets, reps: ex.reps,
+      note: ex.note || "", aka: (ex.aka || []).slice(),
       sets: Array.from({ length: ex.sets }, () => ({ w:"", r:"", done:false }))
     }))
   };
@@ -583,9 +666,10 @@ function nextDayId(){
   if (i < 0) return state.program.days[0].id;
   return state.program.days[(i + 1) % state.program.days.length].id;
 }
-function lastPerformance(name){
+function lastPerformance(name, aka){
+  const want = [name].concat(aka || []).map(n => String(n).toLowerCase());
   for (const s of state.sessions){
-    const ex = (s.exercises || []).find(e => e.name.toLowerCase() === name.toLowerCase());
+    const ex = (s.exercises || []).find(e => want.indexOf(e.name.toLowerCase()) >= 0);
     if (ex){
       const done = ex.sets.filter(st => num(st.w) > 0 && num(st.r) > 0);
       if (done.length) return { date: s.date, sets: done };
@@ -643,7 +727,7 @@ function renderSession(){
       : "No lifts on this session yet — add one below.") + '</div>';
   } else {
     list.innerHTML = d.exercises.map((ex, xi) => {
-      const last = lastPerformance(ex.name);
+      const last = lastPerformance(ex.name, ex.aka);
       const lastTxt = last
         ? "Last " + fmtDate(last.date) + " · " + last.sets.map(s => s.w + "×" + s.r).join("  ")
         : "First time logging this one.";
@@ -659,7 +743,10 @@ function renderSession(){
       return '<article class="ex" data-x="' + xi + '">' +
         '<div class="ex-hd">' +
           '<div style="flex:1;min-width:0">' +
-            '<div class="nm">' + esc(ex.name) + '</div>' +
+            '<div class="nm">' + esc(ex.name) +
+              '<button class="pencil" data-act="editex" title="Rename or add a note" aria-label="Rename or add a note">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>' +
+            '</div>' +
             (ex.note ? '<div class="ex-note">' + esc(ex.note) + '</div>' : "") +
             '<div class="ex-last">' + esc(lastTxt) + '</div>' +
           '</div>' +
@@ -669,6 +756,17 @@ function renderSession(){
           '</div>' +
         '</div>' +
         '<div class="ex-bd">' +
+          (ex._edit ?
+            '<div class="ex-edit">' +
+              '<label class="field"><span>Name</span><input type="text" data-f="name" list="exNames" value="' + esc(ex.name) + '"></label>' +
+              '<label class="field"><span>Reps</span><input type="text" data-f="reps" value="' + esc(ex.reps) + '"></label>' +
+              '<label class="field"><span>Note</span><input type="text" data-f="note" value="' + esc(ex.note || "") + '" placeholder="wide grip · seat 4 · machine"></label>' +
+              '<div class="row2">' +
+                '<button class="btn sm primary" data-act="saveplan">Save to plan</button>' +
+                '<button class="btn sm" data-act="closeedit">Today only</button>' +
+                '<span class="footnote">Save to plan renames it for every future session; your old logs stay linked to it.</span>' +
+              '</div>' +
+            '</div>' : "") +
           '<div class="sethead"><span>set</span><span>weight</span><span>reps</span><span></span><span></span></div>' +
           '<div class="setgrid">' + rows + '</div>' +
           '<div class="setactions"><button class="btn sm" data-act="addset">+ Set</button></div>' +
@@ -679,6 +777,32 @@ function renderSession(){
   $("#draftNote").textContent = state.draft.exercises.length
     ? "Draft is kept on this device until you log it."
     : "";
+}
+
+function settleRename(ex){
+  const was = ex._orig;
+  delete ex._orig;
+  if (!was || was === ex.name) return;
+  ex.aka = ex.aka || [];
+  if (ex.aka.indexOf(was) < 0) ex.aka.push(was);
+}
+
+function saveExerciseToPlan(ex){
+  const day = state.program.days.find(d => d.id === state.draft.dayId);
+  if (!day){ toast("Blank sessions have no plan to save into — add it on the Program tab."); return; }
+  let pex = ex.srcId ? day.exercises.find(e => e.id === ex.srcId) : null;
+  if (!pex){
+    pex = { id: uid("e"), name: ex.name, sets: ex.sets.length, reps: ex.reps, note: "", aka: [] };
+    day.exercises.push(pex); ex.srcId = pex.id;
+  }
+  if (pex.name !== ex.name){
+    pex.aka = pex.aka || [];
+    if (pex.aka.indexOf(pex.name) < 0) pex.aka.push(pex.name);
+    ex.aka = pex.aka.slice();
+  }
+  pex.name = ex.name; pex.reps = ex.reps; pex.note = ex.note || "";
+  commitProgram();
+  toast("Plan updated — " + ex.name);
 }
 
 function updateLiveStats(){
@@ -695,7 +819,7 @@ function loadDay(dayId){
 function finishWorkout(){
   const d = state.draft;
   const logged = d.exercises
-    .map(ex => ({ name: ex.name, target: ex.target, reps: ex.reps,
+    .map(ex => ({ name: ex.name, target: ex.target, reps: ex.reps, note: ex.note || "",
                   sets: ex.sets.filter(s => num(s.w) > 0 && num(s.r) > 0).map(s => ({ w:num(s.w), r:num(s.r) })) }))
     .filter(ex => ex.sets.length);
   const bw = num(d.bw);
@@ -712,7 +836,7 @@ function finishWorkout(){
 
   toast(commas(sessionVolume(s)) + " lb logged — " + d.dayName);
   loadDay(nextDayId());
-  renderProgress();
+  renderProgress(); renderBody();
 }
 
 function deleteSession(id){
@@ -728,7 +852,7 @@ function addBodyweight(date, lbs, quiet){
   state.bw.sort((a,b) => a.d < b.d ? -1 : 1);
   Store.saveBw(state.bw);
   if (!quiet) toast("Bodyweight logged: " + lbs + " lb");
-  renderProgress();
+  renderProgress(); renderBody();
 }
 
 /* ============================================================
@@ -760,8 +884,10 @@ function drawChart(host, pts, opt){
     return;
   }
   const vals = pts.map(p => p.value);
+  const gpts = pts.map((p, i) => ({ i:i, v:p.guide })).filter(o => typeof o.v === "number");
+  const all = vals.concat(gpts.map(o => o.v));
   const zero = kind === "bar";
-  const t = ticks(zero ? 0 : Math.min.apply(null, vals), Math.max.apply(null, vals), 4);
+  const t = ticks(zero ? 0 : Math.min.apply(null, all), Math.max.apply(null, all), 4);
   const lo = zero ? 0 : t.lo, hi = t.hi;
   const iw = CW - PAD.l - PAD.r, ih = CH - PAD.t - PAD.b;
   const X = i => pts.length === 1 ? PAD.l + iw/2
@@ -779,6 +905,16 @@ function drawChart(host, pts, opt){
          '<text x="' + (PAD.l - 9) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" style="fill:var(--ink-3);font-family:var(--mono);font-size:11px">' +
          esc(opt.fmtY ? opt.fmtY(v) : String(v)) + '</text>';
   });
+
+  let guide = "";
+  if (gpts.length > 1){
+    const lastG = gpts[gpts.length - 1];
+    guide = '<path d="' + gpts.map((o, k) => (k ? "L" : "M") + X(o.i).toFixed(1) + "," + Y(o.v).toFixed(1)).join(" ") +
+      '" style="fill:none;stroke:var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4"></path>' +
+      '<text x="' + (X(lastG.i) - 8).toFixed(1) + '" y="' + (Y(lastG.v) - 9).toFixed(1) +
+      '" text-anchor="end" style="fill:var(--ink-3);font-family:var(--mono);font-size:10.5px">' +
+      esc(opt.guideLabel || "goal pace") + '</text>';
+  }
 
   let marks = "";
   if (kind === "bar"){
@@ -811,7 +947,7 @@ function drawChart(host, pts, opt){
       '<svg viewBox="0 0 ' + CW + ' ' + CH + '" role="img" aria-label="' + esc(opt.aria || "chart") + '">' +
         g +
         '<line class="cross" x1="0" x2="0" y1="' + PAD.t + '" y2="' + (PAD.t + ih) + '" style="stroke:var(--line-strong);opacity:0" stroke-width="1" stroke-dasharray="3 3"></line>' +
-        marks + xl +
+        guide + marks + xl +
         '<rect x="' + PAD.l + '" y="' + PAD.t + '" width="' + iw + '" height="' + ih + '" fill="transparent"></rect>' +
       '</svg>' +
       '<div class="tip"></div>' +
@@ -965,7 +1101,8 @@ function renderHistory(){
     '</summary><div class="hbody">' +
       '<div class="tblscroll"><table class="sets"><thead><tr><th>Lift</th><th>Sets (lb × reps)</th><th>Volume</th></tr></thead><tbody>' +
       (s.exercises||[]).map(ex =>
-        '<tr><td>' + esc(ex.name) + '</td><td>' + ex.sets.map(st => st.w + "×" + st.r).join("&nbsp; ") + '</td><td>' +
+        '<tr><td>' + esc(ex.name) + (ex.note ? '<br><span style="color:var(--ink-3)">' + esc(ex.note) + '</span>' : "") +
+        '</td><td>' + ex.sets.map(st => st.w + "×" + st.r).join("&nbsp; ") + '</td><td>' +
         commas(ex.sets.reduce((t,st) => t + st.w*st.r, 0)) + '</td></tr>').join("") +
       '</tbody></table></div>' +
       (s.notes ? '<p class="footnote" style="margin-top:10px">' + esc(s.notes) + '</p>' : "") +
@@ -977,8 +1114,159 @@ function renderHistory(){
 }
 
 function renderProgress(){
-  renderTiles(); renderStrength(); renderVolume(); renderBw(); renderHistory();
+  renderTiles(); renderStrength(); renderVolume(); renderHistory();
 }
+
+/* ============================================================
+   7b. Body — the goal, the scale, the scans
+   ============================================================ */
+function dayIndex(fromISO, toISO){
+  return Math.round((Date.parse(toISO + "T00:00:00") - Date.parse(fromISO + "T00:00:00")) / 864e5);
+}
+function addDaysISO(iso, n){
+  const t = Date.parse(iso + "T00:00:00") + n * 864e5;
+  return new Date(t).toISOString().slice(0, 10);
+}
+function goalAt(iso){
+  const g = state.goal, total = Math.max(1, dayIndex(g.startD, g.targetD));
+  const k = Math.min(1, Math.max(0, dayIndex(g.startD, iso) / total));
+  return g.startLb - (g.startLb - g.targetLb) * k;
+}
+function bwTrend(){
+  const cutoff = addDaysISO(todayISO(), -21);
+  const pts = state.bw.filter(e => e.d >= cutoff);
+  if (pts.length < 3) return null;
+  const x0 = Date.parse(pts[0].d + "T00:00:00");
+  const xs = pts.map(e => (Date.parse(e.d + "T00:00:00") - x0) / 864e5);
+  if (xs[xs.length-1] - xs[0] < 6) return null;
+  const n = pts.length;
+  const mx = xs.reduce((a,b) => a+b, 0) / n, my = pts.reduce((a,e) => a+e.lbs, 0) / n;
+  let top = 0, bot = 0;
+  xs.forEach((x, i) => { top += (x - mx) * (pts[i].lbs - my); bot += (x - mx) * (x - mx); });
+  return bot ? (top / bot) * 7 : null;
+}
+
+function renderGoal(){
+  const g = state.goal;
+  const cur = state.bw.length ? state.bw[state.bw.length - 1] : { d: g.startD, lbs: g.startLb };
+  const total = Math.max(1, dayIndex(g.startD, g.targetD));
+  const elapsed = Math.min(total, Math.max(0, dayIndex(g.startD, todayISO())));
+  const daysLeft = total - elapsed;
+  const lost = g.startLb - cur.lbs;
+  const toGo = cur.lbs - g.targetLb;
+  const need = toGo / Math.max(0.15, daysLeft / 7);
+  const trend = bwTrend();
+
+  $("#goalHd").textContent = "Road to " + g.targetLb;
+  $("#goalDeadline").textContent = daysLeft + " days left · target " + fmtDate(g.targetD);
+  $("#goalLb").value = g.targetLb;
+  $("#goalDate").value = g.targetD;
+
+  const spanLb = Math.max(0.1, g.startLb - g.targetLb);
+  $("#goalFill").style.width = Math.max(0, Math.min(100, (lost / spanLb) * 100)) + "%";
+  $("#goalMark").style.left = Math.max(0, Math.min(100, (elapsed / total) * 100)) + "%";
+
+  let proj = "—", projU = "need a week of weigh-ins";
+  if (trend !== null && trend < -0.05){
+    const wks = toGo / -trend;
+    proj = fmtDate(addDaysISO(todayISO(), Math.round(wks * 7)));
+    projU = "projected at " + Math.abs(trend).toFixed(1) + " lb/wk";
+  } else if (trend !== null){
+    proj = "flat"; projU = "no loss in the last 3 weeks";
+  }
+
+  $("#goalTiles").innerHTML = [
+    { v: cur.lbs.toFixed(1), u: "lb on " + fmtDate(cur.d) },
+    { v: (lost >= 0 ? "-" : "+") + Math.abs(lost).toFixed(1), u: "lb since " + fmtDate(g.startD) },
+    { v: toGo.toFixed(1), u: "lb still to go" },
+    { v: need.toFixed(1), u: "lb/wk needed from here" },
+    { v: trend === null ? "—" : (trend < 0 ? "-" : "+") + Math.abs(trend).toFixed(1), u: "lb/wk actual (3-wk trend)" },
+    { v: proj, u: projU }
+  ].map(t => '<div class="tile"><span class="v">' + esc(t.v) + '</span><span class="u">' + esc(t.u) + '</span></div>').join("");
+
+  const onPace = goalAt(todayISO());
+  let verdict;
+  if (toGo <= 0) verdict = "Target hit. Hold here and let the scan catch up.";
+  else if (cur.lbs <= onPace) verdict = "Ahead of pace — you should be at " + onPace.toFixed(1) + " lb today.";
+  else verdict = (cur.lbs - onPace).toFixed(1) + " lb behind the line (pace says " + onPace.toFixed(1) + " lb today).";
+  $("#goalVerdict").textContent = verdict;
+}
+
+function renderBw(){
+  const pts = state.bw.slice(-45).map(e => ({
+    label: fmtDate(e.d), value: e.lbs, guide: goalAt(e.d),
+    sub: "pace line " + goalAt(e.d).toFixed(1) + " lb"
+  }));
+  drawChart($("#bwChart"), pts, {
+    kind: "line", color: "var(--legs)",
+    fmtY: v => v.toFixed(0), fmtV: v => v.toFixed(1) + " lb",
+    guideLabel: "pace to " + state.goal.targetLb,
+    aria: "Bodyweight against the pace needed to reach the goal",
+    empty: "Weigh in first thing tomorrow morning and log it here."
+  });
+}
+
+const SCAN_FIELDS = [
+  { k:"weight", label:"Weight", unit:"lb", dp:1 },
+  { k:"bf",     label:"Body fat", unit:"%", dp:1 },
+  { k:"fat",    label:"Fat mass", unit:"lb", dp:1 },
+  { k:"lean",   label:"Lean mass", unit:"lb", dp:1 },
+  { k:"smm",    label:"Skeletal muscle", unit:"lb", dp:1 },
+  { k:"visc",   label:"Visceral level", unit:"", dp:0 },
+  { k:"waist",  label:"Waist", unit:"in", dp:1 },
+  { k:"bmr",    label:"BMR", unit:"kcal", dp:0 },
+  { k:"tee",    label:"TEE", unit:"kcal", dp:0 }
+];
+
+function renderScans(){
+  const scans = state.scans.slice().sort((a,b) => a.d < b.d ? -1 : 1);
+  const host = $("#scanLatest");
+  if (!scans.length){
+    host.innerHTML = '<div class="empty">No scans yet. Log your Evolt numbers below and every future scan lines up against them.</div>';
+    $("#bfChart").innerHTML = ""; $("#scanTable").innerHTML = "";
+    return;
+  }
+  const cur = scans[scans.length-1], prev = scans.length > 1 ? scans[scans.length-2] : null;
+  const keyed = [
+    { k:"weight", edge:"var(--ink-3)" }, { k:"bf", edge:"var(--legs)" }, { k:"fat", edge:"var(--push)" },
+    { k:"lean", edge:"var(--good)" }, { k:"smm", edge:"var(--accent)" }, { k:"waist", edge:"var(--pull)" }
+  ];
+  host.innerHTML = '<div class="eyebrow" style="margin-bottom:9px">Latest scan · ' + esc(fmtDate(cur.d)) +
+    (prev ? " · change vs " + esc(fmtDate(prev.d)) : " · baseline") + '</div><dl class="scanhero">' +
+    keyed.map(o => {
+      const f = SCAN_FIELDS.find(x => x.k === o.k);
+      const v = cur[o.k];
+      if (typeof v !== "number") return "";
+      let d = "";
+      if (prev && typeof prev[o.k] === "number"){
+        const diff = v - prev[o.k];
+        d = " <small>" + (diff > 0 ? "+" : "") + diff.toFixed(f.dp) + "</small>";
+      }
+      return '<div style="--edge:' + o.edge + '"><dt>' + esc(f.label) + '</dt><dd>' + v.toFixed(f.dp) +
+             ' <small>' + esc(f.unit) + '</small>' + d + '</dd></div>';
+    }).join("") + '</dl>';
+
+  if (scans.length > 1){
+    drawChart($("#bfChart"), scans.map(sc => ({
+      label: fmtDate(sc.d), value: sc.bf, sub: sc.lean ? "lean " + sc.lean.toFixed(1) + " lb" : ""
+    })), { kind:"line", color:"var(--legs)", fmtY: v => v.toFixed(0) + "%", fmtV: v => v.toFixed(1) + "% body fat",
+           aria:"Body fat percentage across scans" });
+  } else {
+    const nextDue = addDaysISO(cur.d, 12);
+    $("#bfChart").innerHTML = '<div class="empty">One scan is a baseline, not a trend. Scan #2 around ' +
+      esc(fmtDate(nextDue)) + ' (ten workouts out) turns this into a line.</div>';
+  }
+
+  $("#scanTable").innerHTML = '<table class="sets"><thead><tr><th>Date</th>' +
+    SCAN_FIELDS.map(f => '<th>' + esc(f.label) + (f.unit ? " " + esc(f.unit) : "") + '</th>').join("") +
+    '<th></th></tr></thead><tbody>' +
+    scans.slice().reverse().map(sc => '<tr><td>' + esc(fmtDate(sc.d)) + '</td>' +
+      SCAN_FIELDS.map(f => '<td>' + (typeof sc[f.k] === "number" ? sc[f.k].toFixed(f.dp) : "—") + '</td>').join("") +
+      '<td><button class="btn ghost sm danger" data-delscan="' + esc(sc.d) + '">delete</button></td></tr>').join("") +
+    '</tbody></table>';
+}
+
+function renderBody(){ renderGoal(); renderBw(); renderScans(); }
 
 /* ============================================================
    8. Program editor — add or subtract lifts and whole days
@@ -1038,14 +1326,15 @@ function refreshDatalist(){
    9. Events
    ============================================================ */
 function switchTab(name){
-  ["train","progress","program"].forEach(t => {
+  ["train","progress","body","program"].forEach(t => {
     $("#tab-" + t).setAttribute("aria-selected", String(t === name));
     $("#view-" + t).classList.toggle("hidden", t !== name);
   });
   if (name === "progress") renderProgress();
+  if (name === "body") renderBody();
   if (name === "program") renderProgramEditor();
 }
-["train","progress","program"].forEach(t => $("#tab-" + t).addEventListener("click", () => switchTab(t)));
+["train","progress","body","program"].forEach(t => $("#tab-" + t).addEventListener("click", () => switchTab(t)));
 
 $("#dayRail").addEventListener("click", ev => {
   const b = ev.target.closest("[data-day]"); if (!b) return;
@@ -1058,13 +1347,23 @@ $("#exList").addEventListener("click", ev => {
   const exEl = ev.target.closest(".ex"), xi = +exEl.dataset.x;
   const rowEl = ev.target.closest(".setrow");
   const ex = state.draft.exercises[xi];
-  if (act === "addset") ex.sets.push({ w:"", r:"", done:false });
+  if (act === "editex"){ ex._edit = !ex._edit; if (ex._edit) ex._orig = ex.name; else settleRename(ex); }
+  else if (act === "closeedit"){ settleRename(ex); ex._edit = false; }
+  else if (act === "saveplan"){ settleRename(ex); saveExerciseToPlan(ex); ex._edit = false; }
+  else if (act === "addset") ex.sets.push({ w:"", r:"", done:false });
   else if (act === "delset") ex.sets.splice(+rowEl.dataset.s, 1);
   else if (act === "tick"){ const st = ex.sets[+rowEl.dataset.s]; st.done = !st.done; }
   else if (act === "delex") state.draft.exercises.splice(xi, 1);
   saveDraft(); renderSession();
 });
 $("#exList").addEventListener("input", ev => {
+  if (ev.target.closest(".ex-edit")){
+    const ex = state.draft.exercises[+ev.target.closest(".ex").dataset.x], f = ev.target.dataset.f;
+    if (f === "name") ex.name = ev.target.value;
+    else if (f === "reps") ex.reps = ev.target.value;
+    else if (f === "note") ex.note = ev.target.value;
+    saveDraft(); return;
+  }
   const row = ev.target.closest(".setrow"); if (!row) return;
   const ex = state.draft.exercises[+row.dataset.x], st = ex.sets[+row.dataset.s];
   if (ev.target.classList.contains("w")) st.w = ev.target.value;
@@ -1077,9 +1376,10 @@ $("#addExBtn").addEventListener("click", () => {
   if (!name){ toast("Name the lift first."); return; }
   const sets = Math.max(1, Math.min(12, parseInt($("#newExSets").value, 10) || 3));
   const reps = $("#newExReps").value.trim() || "8-12";
-  state.draft.exercises.push({ id: uid("x"), name: name, target: sets, reps: reps, note: "",
+  state.draft.exercises.push({ id: uid("x"), name: name, target: sets, reps: reps,
+    note: $("#newExNote").value.trim(), aka: [],
     sets: Array.from({ length: sets }, () => ({ w:"", r:"", done:false })) });
-  $("#newExName").value = "";
+  $("#newExName").value = ""; $("#newExNote").value = "";
   saveDraft(); renderSession();
   toast(name + " added to this session.");
 });
@@ -1101,6 +1401,43 @@ $("#bwAdd").addEventListener("click", () => {
   addBodyweight($("#bwDate").value || todayISO(), Math.round(lbs*10)/10);
   $("#bwInput").value = "";
 });
+$("#goalSave").addEventListener("click", () => {
+  const lb = num($("#goalLb").value), d = $("#goalDate").value;
+  if (!lb || !d){ toast("Set both a target weight and a date."); return; }
+  state.goal = Object.assign({}, state.goal, { targetLb: lb, targetD: d });
+  Store.saveGoal(state.goal);
+  renderBody();
+  toast("Goal set: " + lb + " lb by " + fmtDate(d));
+});
+
+$("#scanAdd").addEventListener("click", () => {
+  const scan = {};
+  $$("[data-sf]").forEach(el => {
+    const k = el.dataset.sf;
+    if (k === "d") scan.d = el.value;
+    else if (el.value !== "") scan[k] = num(el.value);
+  });
+  if (!scan.d){ toast("A scan needs a date."); return; }
+  if (typeof scan.weight !== "number" && typeof scan.bf !== "number"){
+    toast("Enter at least a weight or a body fat percentage."); return;
+  }
+  state.scans = state.scans.filter(x => x.d !== scan.d).concat([scan]).sort((a,b) => a.d < b.d ? -1 : 1);
+  Store.saveScans(state.scans);
+  if (typeof scan.weight === "number") addBodyweight(scan.d, scan.weight, true);
+  $$("[data-sf]").forEach(el => { if (el.dataset.sf !== "d") el.value = ""; });
+  $("#scanFormWrap").open = false;
+  renderBody();
+  toast("Scan saved — " + fmtDate(scan.d));
+});
+
+$("#scanTable").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-delscan]"); if (!b) return;
+  if (!confirm("Delete the scan from " + fmtDate(b.dataset.delscan) + "?")) return;
+  state.scans = state.scans.filter(x => x.d !== b.dataset.delscan);
+  Store.saveScans(state.scans);
+  renderBody();
+});
+
 $("#history").addEventListener("click", ev => {
   const b = ev.target.closest("[data-del]"); if (!b) return;
   if (confirm("Delete this session permanently?")) deleteSession(b.dataset.del);
@@ -1123,11 +1460,22 @@ $("#programEditor").addEventListener("input", ev => {
   clearTimeout(commitProgram._t);
   commitProgram._t = setTimeout(() => { Store.saveProgram(state.program); renderRail(); }, 600);
 });
+$("#programEditor").addEventListener("focusin", ev => {
+  if (ev.target.dataset.f === "exname") ev.target.dataset.prev = ev.target.value;
+});
 $("#programEditor").addEventListener("change", ev => {
-  if (ev.target.dataset.f !== "tag") return;
-  const dayEl = ev.target.closest(".dayedit");
-  state.program.days[+dayEl.dataset.d].tag = ev.target.value;
-  commitProgram();
+  const dayEl = ev.target.closest(".dayedit"); if (!dayEl) return;
+  const day = state.program.days[+dayEl.dataset.d];
+  if (ev.target.dataset.f === "tag"){ day.tag = ev.target.value; commitProgram(); return; }
+  if (ev.target.dataset.f === "exname"){
+    const was = ev.target.dataset.prev, ex = day.exercises[+ev.target.closest(".exedit").dataset.x];
+    if (was && ex && was !== ex.name){
+      ex.aka = ex.aka || [];
+      if (ex.aka.indexOf(was) < 0) ex.aka.push(was);
+      commitProgram();
+      toast("Renamed — past " + was + " sets stay linked.");
+    }
+  }
 });
 $("#programEditor").addEventListener("click", ev => {
   const btn = ev.target.closest("[data-act]"); if (!btn) return;
@@ -1181,15 +1529,20 @@ function boot(){
   state.program  = lsGet("program", null) || JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
   state.sessions = lsGet("sessions", []);
   state.bw       = lsGet("bw", []);
+  state.scans    = lsGet("scans", []);
+  state.goal     = lsGet("goal", null) || Object.assign({}, DEFAULT_GOAL);
   state.draft    = lsGet("draft", null);
-  if (!state.draft || !state.draft.exercises) state.draft = buildDraft(state.program.days[0]);
+  if (!state.draft || !state.draft.exercises){
+    state.draft = buildDraft(state.program.days.find(d => d.id === nextDayId()) || state.program.days[0]);
+  }
   if (state.draft.date !== todayISO() && !state.draft.exercises.some(ex => ex.sets.some(s => s.w || s.r))){
     state.draft = buildDraft(state.program.days.find(d => d.id === nextDayId()) || state.program.days[0]);
   }
   $("#bwDate").value = todayISO();
+  $('[data-sf="d"]').value = todayISO();
   $("#cycleLabel").textContent = trainingDays() + "-day split · cut phase";
   refreshDatalist();
-  renderRail(); renderSession(); renderProgress(); renderProgramEditor();
+  renderRail(); renderSession(); renderProgress(); renderBody(); renderProgramEditor();
   setSync(false);
   syncCloud();
 }
@@ -1227,12 +1580,32 @@ async function syncCloud(){
     } else if (state.bw.length){
       await Store.saveBw(state.bw);
     }
+
+    const sc = await Store.db.doc("state/scans").get();
+    if (sc.exists && Array.isArray(sc.data().entries)){
+      const merged = new Map(sc.data().entries.map(e => [e.d, e]));
+      state.scans.forEach(e => { if (!merged.has(e.d)) merged.set(e.d, e); });
+      state.scans = Array.from(merged.values()).sort((a,b) => a.d < b.d ? -1 : 1);
+      lsSet("scans", state.scans);
+      if (state.scans.length !== sc.data().entries.length) Store.saveScans(state.scans);
+    } else if (state.scans.length){
+      await Store.saveScans(state.scans);
+    }
+
+    const gl = await Store.db.doc("state/goal").get();
+    if (gl.exists && gl.data().targetLb){
+      state.goal = { startD: gl.data().startD || DEFAULT_GOAL.startD, startLb: gl.data().startLb || DEFAULT_GOAL.startLb,
+                     targetLb: gl.data().targetLb, targetD: gl.data().targetD || DEFAULT_GOAL.targetD };
+      lsSet("goal", state.goal);
+    } else {
+      await Store.saveGoal(state.goal);
+    }
   }catch(e){
     setSync(false);
     return;
   }
   refreshDatalist();
-  renderRail(); renderSession(); renderProgress(); renderProgramEditor();
+  renderRail(); renderSession(); renderProgress(); renderBody(); renderProgramEditor();
 }
 
 boot();
