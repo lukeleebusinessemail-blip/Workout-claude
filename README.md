@@ -44,6 +44,12 @@ The Actions token cannot create the Pages site itself
   off, add or remove sets and lifts on the fly, log the session. The pencil on
   each lift renames it and attaches a note ("wide grip", "seat 4"); saving to the
   plan keeps past logs linked to the old name via an `aka` list.
+- **Fuel** — daily calorie and macro log against target: a searchable library of
+  ~145 chain and whole foods, hand entry, and a natural-language box that asks
+  Claude (`sample` capability) to estimate macros from a description, returning an
+  editable draft you approve before it is logged. A 14-day intake chart with the
+  target as a guide line, and a reconciliation of what the intake predicts against
+  what the scale actually did.
 - **Progress** — estimated 1RM curve per lift (Epley), weekly tonnage, and a full
   session history you can expand or delete.
 - **Body** — goal tracker with a pace line on the bodyweight chart, plus a body
@@ -79,3 +85,9 @@ work. General fitness information, not medical advice.
 | `state/bodyweight` | `{ entries: [{ d, lbs }] }` |
 | `state/scans` | `{ entries: [{ d, weight, bf, fat, lean, smm, visc, waist, bmr, tee }] }` |
 | `state/goal` | `{ startD, startLb, targetLb, targetD }` |
+| `state/macros` | `{ kcal, p, c, f }` daily targets |
+| `state/myfoods` | `{ items: [{ name, kcal, p, c, f }] }` saved custom foods |
+| `food/<date>` | one document per day: `{ d, entries: [{ id, name, brand, q, kcal, p, c, f, src }] }` |
+
+Food values in the built-in library are published brand or USDA figures, rounded.
+Claude-estimated entries are marked `src: "ai"` and shown as `est.` in the log.
