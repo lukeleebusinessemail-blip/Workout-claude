@@ -21,6 +21,23 @@ Both read `window.claude` and degrade to `localStorage` when it is absent, so th
 same file runs in either place. **Backup & transfer** on the Program tab moves
 data between them as one JSON block.
 
+## Putting it on a phone home screen
+
+**Option A — no setup.** Open the published artifact in Safari, Share → Add to
+Home Screen. Keeps account sync; opens through claude.ai, so it needs a signal
+and a signed-in session.
+
+**Option B — a real standalone app.** Enable Pages once: repo **Settings →
+Pages → Source: GitHub Actions**, then re-run the "Deploy Iron Ledger to GitHub
+Pages" workflow. It publishes to
+`https://lukeleebusinessemail-blip.github.io/Workout-claude/`; Add to Home Screen
+from there gives a full-screen app that opens offline. Storage is that browser's
+`localStorage`, so move existing history across with **Backup & transfer** on the
+Program tab.
+
+The Actions token cannot create the Pages site itself
+(`Resource not accessible by integration`), which is why that switch is manual.
+
 ## What it does
 
 - **Train** — pick a day from the rail, fill in weight × reps per set, tick sets
