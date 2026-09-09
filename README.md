@@ -3,9 +3,23 @@
 A single-file workout tracker for a six-day push/pull/legs cut phase.
 
 - **`workout-tracker.html`** — the whole app: the program, the logger, the charts.
-  Published as a Claude Artifact; it uses the `db` runtime capability to persist
-  sessions to the signed-in account, and falls back to `localStorage` when that
-  capability is unavailable.
+  The single source of truth, deployed two ways.
+- **`build-pwa.js`** — wraps that file into `site/` as an installable page
+  (manifest, service worker, icons) for GitHub Pages.
+- **`assets/`** — app icons. **`.github/workflows/pages.yml`** — builds and deploys
+  `site/` on every push.
+
+## Two deployments, one file
+
+| | Claude Artifact | GitHub Pages app |
+|---|---|---|
+| Storage | `db` capability, synced to the account | `localStorage`, that browser only |
+| Offline | no | yes, service worker caches the shell |
+| Home screen | Safari bookmark via claude.ai | real standalone app icon |
+
+Both read `window.claude` and degrade to `localStorage` when it is absent, so the
+same file runs in either place. **Backup & transfer** on the Program tab moves
+data between them as one JSON block.
 
 ## What it does
 
